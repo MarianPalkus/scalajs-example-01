@@ -1,3 +1,5 @@
+enablePlugins(ScalaJSPlugin)
+
 name := """scala-js-test-01"""
 
 version := "1.0-SNAPSHOT"
