@@ -1,3 +1,5 @@
+# Work in Progres!
+
 # Basic Scala js Setup 
 
 ## Naive (non-working) Approach
