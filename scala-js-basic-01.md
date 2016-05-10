@@ -135,3 +135,45 @@ EclipseKeys.skipParents in ThisBuild := false
 EclipseKeys.preTasks := Seq(compile in (backend, Compile))
  ```
  
+ We include the compiled JavaScript sources of the webapp project by adding the following line to the `backend\app\views\main.scala.html`:
+ ```
+ @playscalajs.html.scripts("webapp")
+ ```
+ 
+ An impicit environment is required, hence we add an implicit parameter:
+ ```@(title: String)(content: Html)(implicit environment: play.api.Environment)```
+ 
+ The complete `backend\app\views\main.scala.html` looks as follows:
+ ```
+ @(title: String)(content: Html)(implicit environment: play.api.Environment)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        @* Here's where we render the page title `String`. *@
+        <title>@title</title>
+        <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+        <script src="@routes.Assets.versioned("javascripts/hello.js")" type="text/javascript"></script>
+    </head>
+    <body>
+        @* And here's where we render the `Html` object containing
+         * the page content. *@
+        @content
+        @playscalajs.html.scripts("webapp")
+    </body>
+</html>
+ ```
+ 
+ Since we want to test the code, we add the implicit environment to the `backend\app\views\index.scala.html`:
+ ```
+ @(message: String)(implicit environment: play.api.Environment)
+  ...
+ ````
+ and the controller `backend\app\HomeController.scala`:
+ ```
+ class HomeController @Inject()(implicit environment: Environment) extends Controller {
+   ...
+ ```
+ 
+ The project should compile and run now.
