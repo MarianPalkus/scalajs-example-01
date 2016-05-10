@@ -1,4 +1,4 @@
-package webapp
+package src.main.scala.webapp
 
 import scala.scalajs.js.JSApp
 

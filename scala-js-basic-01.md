@@ -1,5 +1,6 @@
-# Scala js 
+# Basic Scala js Setup 
 
+## Naive (non-working) Approach
 - Create a new Scala Project (scala-play template)
 - For ScalaIDE:
  - Add sbteclipse to the project (`project\plugins.sbt`):
@@ -51,4 +52,86 @@
  ```
  - This error occurres because JVM code (Play!) is mixed with ScalaJs code. The backend and frontend code have to be split into separate sbt-projects. To benefit from scalaJs, a third project should contain the shared code which serves as a dependency for both the backend and the frontend project.
  
+ ## Separating Backend and Frontend Code
+ 
+ As described above, the backend (Play!) code and the frontend code have to live in separated sbt-projects to avoid compiling JVM (Play!) code to JavaScript.
+ 
+(Based on https://github.com/vmunier/play-with-scalajs-example).
+
+Therfore, the project is restructured as follows:
+
+- <proect root>
+ - backend: backend code/play application
+  - app
+  - conf
+  - public
+  - test
+ - webapp: frontend code/scalaJs application
+  - src
+   - main
+    - scala
+     - webapp
+ - shared: shared code, i.e. Models, API
+  - src
+   - main
+    - scala
+     - shared
+
+We will use the sbt-plugins `sbt-play-scalajs` and `sbt-gzip`, so we add them to the `project\plugins.sbt`: 
+```
+addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.3.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.0")
+```
+
+We update the `build.sbt` for multiple projects (see http://www.scala-sbt.org/0.13/docs/Multi-Project.html):
+ ```
+import sbt.Project.projectToRef
+
+lazy val clients = Seq(webapp)
+
+lazy val scalaV = "2.11.8"
+
+lazy val backend = (project in file("backend")).settings(
+  scalaVersion := scalaV,
+  name := "scala-js-test-01-backend",
+  scalaJSProjects := clients,
+  pipelineStages := Seq(scalaJSProd, gzip),
+  resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
+	  libraryDependencies ++= Seq(
+	  jdbc,
+	  cache,
+	  ws,
+	  "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
+	  "com.vmunier" %% "play-scalajs-scripts" % "0.5.0"
+  )
+).enablePlugins(PlayScala).
+  aggregate(clients.map(projectToRef): _*).
+  dependsOn(sharedJvm)
+  
+lazy val webapp = (project in file("webapp")).settings(
+  scalaVersion := scalaV,
+  persistLauncher := true,
+  persistLauncher in Test := false,
+  libraryDependencies ++= Seq(
+    "org.scala-js" %%% "scalajs-dom" % "0.8.0"
+  )
+).enablePlugins(ScalaJSPlugin, ScalaJSPlay)
+ .dependsOn(sharedJs)
+
+lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).
+  settings(scalaVersion := scalaV).
+  jsConfigure(_ enablePlugins ScalaJSPlay)
+  
+lazy val sharedJvm = shared.jvm
+lazy val sharedJs = shared.js
+
+// loads the Play project at sbt startup
+onLoad in Global := (Command.process("project backend", _: State)) compose (onLoad in Global).value
+
+// for Eclipse users
+EclipseKeys.skipParents in ThisBuild := false
+// Compile the project before generating Eclipse files, so that generated .scala or .class files for views and routes are present
+EclipseKeys.preTasks := Seq(compile in (backend, Compile))
+ ```
  
