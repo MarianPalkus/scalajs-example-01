@@ -17,8 +17,8 @@
 
     name := ...
 
-    scalaVersion := "2.11.7" // or any other Scala version >= 2.10.2
-  ```
+    scalaVersion := "2.11.7" // or any other Scala version >= 2.10.2```
+  
  - Last, we need a project/build.properties to specify the sbt version (>= 0.13.7):
  
   - ```sbt.version=0.13.11```
@@ -34,8 +34,8 @@
       def main(): Unit = {
         println("Hello world!")
       }
-    }
-   ```
+    }```
+    
 - When compiling the application the following error shows up:
  - ```
   java.lang.RuntimeException: Scala.js cannot be run in a forked JVM
@@ -50,8 +50,8 @@
         at sbt.EvaluateSettings$$anon$3.run(INode.scala:74)
         at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
         at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
-        at java.lang.Thread.run(Unknown Source)
- ```
+        at java.lang.Thread.run(Unknown Source)```
+        
  - This error occurres because JVM code (Play!) is mixed with ScalaJs code. The backend and frontend code have to be split into separate sbt-projects. To benefit from scalaJs, a third project should contain the shared code which serves as a dependency for both the backend and the frontend project.
  
  ## Separating Backend and Frontend Code
@@ -83,11 +83,10 @@ We will use the sbt-plugins `sbt-play-scalajs` and `sbt-gzip`, so we add them to
 ```
 addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.3.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.0")
-```
+addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.0")```
 
 We update the `build.sbt` for multiple projects (see http://www.scala-sbt.org/0.13/docs/Multi-Project.html):
- ```
+```
 import sbt.Project.projectToRef
 
 lazy val clients = Seq(webapp)
@@ -134,19 +133,18 @@ onLoad in Global := (Command.process("project backend", _: State)) compose (onLo
 // for Eclipse users
 EclipseKeys.skipParents in ThisBuild := false
 // Compile the project before generating Eclipse files, so that generated .scala or .class files for views and routes are present
-EclipseKeys.preTasks := Seq(compile in (backend, Compile))
- ```
+EclipseKeys.preTasks := Seq(compile in (backend, Compile))```
  
- We include the compiled JavaScript sources of the webapp project by adding the following line to the `backend\app\views\main.scala.html`:
- ```
- @playscalajs.html.scripts("webapp")
- ```
+We include the compiled JavaScript sources of the webapp project by adding the following line to the `backend\app\views\main.scala.html`:
+```
+@playscalajs.html.scripts("webapp")```
  
- An impicit environment is required, hence we add an implicit parameter:
- ```@(title: String)(content: Html)(implicit environment: play.api.Environment)```
+An impicit environment is required, hence we add an implicit parameter:
+```@(title: String)(content: Html)(implicit environment: play.api.Environment)```
  
- The complete `backend\app\views\main.scala.html` looks as follows:
- ```
+The complete `backend\app\views\main.scala.html` looks as follows:
+
+```
  @(title: String)(content: Html)(implicit environment: play.api.Environment)
 
 <!DOCTYPE html>
@@ -164,18 +162,16 @@ EclipseKeys.preTasks := Seq(compile in (backend, Compile))
         @content
         @playscalajs.html.scripts("webapp")
     </body>
-</html>
- ```
+</html>```
  
- Since we want to test the code, we add the implicit environment to the `backend\app\views\index.scala.html`:
- ```
+Since we want to test the code, we add the implicit environment to the `backend\app\views\index.scala.html`:
+```
  @(message: String)(implicit environment: play.api.Environment)
-  ...
- ````
+  ...```
+  
  and the controller `backend\app\HomeController.scala`:
- ```
+```
  class HomeController @Inject()(implicit environment: Environment) extends Controller {
-   ...
- ```
+   ...```
  
  The project should compile and run now.
